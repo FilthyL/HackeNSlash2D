@@ -585,11 +585,11 @@ export class Renderer {
     for (const t of b.telegraphs) this.telegraph(t);
     const actors = [
       { actor: b.player, boss: false },
-      { actor: b.boss, boss: true },
+      ...(b.stage === 'gate' ? b.guards : [b.boss]).map((actor) => ({ actor, boss: true })),
     ].sort((a, z) => a.actor.x + a.actor.y - (z.actor.x + z.actor.y));
     for (const a of actors) this.samurai(a.actor, a.boss, mode, cinemaTime);
     for (const e of b.effects) this.effect(e);
-    if (mode === 'phase') {
+    if (mode === 'phase' && b.stage === 'warden') {
       const q = this.project(b.boss.x, b.boss.y);
       for (let i = 0; i < 32; i++) {
         const a = (i / 32) * TAU + this.time * 0.2,
@@ -871,7 +871,7 @@ export class Renderer {
     // Keep the sword clear of the robe in each combat pose.
     let hand = { x: 23, y: -52 },
       tip = { x: 76, y: -67 };
-    if (a.action === 'attack' || a.action === 'heavy') {
+    if (a.action === 'attack' || a.action === 'heavy' || a.action === 'draw') {
       const t = a.actionTime * 12;
       tip = { x: 23 + Math.cos(t) * 66, y: -52 + Math.sin(t) * 46 };
     }
@@ -900,9 +900,139 @@ export class Renderer {
       c.stroke();
     }
   }
+  sentry(a: Boss) {
+    const c = this.ctx,
+      q = this.project(a.x, a.y),
+      dead = a.hp <= 0;
+    const face = Math.cos(a.facing) - Math.sin(a.facing) >= 0 ? 1 : -1;
+    const stride = a.action === 'approach' ? Math.sin(this.time * 9) * 4 : 0;
+    this.ellipse(q.x, q.y + 3, 23, 9, '#00000077');
+    c.save();
+    c.translate(q.x, q.y);
+    c.scale(face, 1.08);
+    if (dead) {
+      c.rotate(-1);
+      c.scale(1, 0.55);
+      c.globalAlpha = 0.6;
+    }
+    // Lamellar uniforms and paper face-wraps distinguish the former comrades from Ren.
+    this.path(
+      [
+        { x: -14, y: -36 },
+        { x: 14, y: -36 },
+        { x: 19, y: -7 },
+        { x: 3, y: -7 },
+        { x: 0, y: -24 },
+        { x: -5, y: -7 },
+        { x: -21, y: -8 },
+      ],
+      '#222222',
+      '#777777',
+    );
+    this.line({ x: -10, y: -13 }, { x: -13 - stride, y: 0 }, '#a0a0a0', 5);
+    this.line({ x: 11, y: -13 }, { x: 13 + stride, y: 1 }, '#999999', 5);
+    this.path(
+      [
+        { x: -17, y: -68 },
+        { x: 12, y: -68 },
+        { x: 23, y: -52 },
+        { x: 15, y: -29 },
+        { x: -16, y: -29 },
+        { x: -23, y: -52 },
+      ],
+      '#353535',
+      '#111111',
+    );
+    for (let i = 0; i < 5; i++) {
+      this.line({ x: -16, y: -61 + i * 6 }, { x: 17, y: -61 + i * 6 }, '#929292', 1);
+      for (let j = 0; j < 4; j++)
+        this.line(
+          { x: -11 + j * 7, y: -62 + i * 6 },
+          { x: -10 + j * 7, y: -59 + i * 6 },
+          '#c0c0c0',
+          0.8,
+        );
+    }
+    this.line({ x: -15, y: -68 }, { x: 13, y: -30 }, '#cacaca', 6);
+    this.line({ x: 10, y: -65 }, { x: -14, y: -30 }, '#7b7b7b', 3);
+    this.ellipse(0, -78, 10, 12, '#171717');
+    this.path(
+      [
+        { x: -11, y: -85 },
+        { x: 10, y: -84 },
+        { x: 8, y: -68 },
+        { x: -8, y: -70 },
+      ],
+      '#c6c6c6',
+      '#111111',
+    );
+    this.line({ x: -7, y: -78 }, { x: 7, y: -78 }, '#111111', 2);
+    this.path(
+      [
+        { x: -23, y: -87 },
+        { x: -3, y: -103 },
+        { x: 23, y: -88 },
+        { x: 11, y: -84 },
+        { x: -12, y: -84 },
+      ],
+      '#292929',
+      '#aeaeae',
+    );
+    const flutter = this.reduced ? 2 : Math.sin(this.time * 7) * 3 + this.wind * 9;
+    this.path(
+      [
+        { x: -10, y: -76 },
+        { x: -24 - flutter, y: -66 },
+        { x: -34 - flutter, y: -70 },
+        { x: -25 - flutter, y: -62 },
+        { x: -8, y: -71 },
+      ],
+      '#bebebe',
+    );
+    c.save();
+    c.translate(17, -48);
+    const attack = a.action === 'attack',
+      windup = a.action === 'windup';
+    c.rotate(windup ? -0.9 : attack ? Math.sin(a.actionTime * 10) * 1.1 : 0);
+    if (a.kind === 'spear') {
+      this.line({ x: -35, y: 24 }, { x: 75, y: -48 }, '#181818', 4);
+      this.line({ x: -35, y: 23 }, { x: 76, y: -49 }, '#959595', 1);
+      this.path(
+        [
+          { x: 67, y: -43 },
+          { x: 87, y: -60 },
+          { x: 79, y: -39 },
+        ],
+        '#e4e4e4',
+        '#0a0a0a',
+      );
+    } else {
+      this.line({ x: -5, y: 3 }, { x: 57, y: -26 }, '#111111', 4);
+      this.line({ x: 4, y: -1 }, { x: 57, y: -26 }, '#eeeeee', 2);
+    }
+    c.restore();
+    this.line({ x: 13, y: -61 }, { x: 20, y: -48 }, '#3d3d3d', 9);
+    c.restore();
+    c.save();
+    c.textAlign = 'center';
+    c.font = '8px Arial';
+    c.fillStyle = dead ? '#eeeeee' : '#cccccc';
+    c.fillText(a.name ?? '', q.x, q.y - (dead ? 10 : 126));
+    if (!dead) {
+      c.fillStyle = '#0c0c0c';
+      c.fillRect(q.x - 24, q.y - 119, 48, 3);
+      c.fillStyle = '#dedede';
+      c.fillRect(q.x - 24, q.y - 119, (48 * a.hp) / a.maxHp, 3);
+    }
+    c.restore();
+  }
   samurai(a: Player | Boss, isBoss: boolean, mode: string, _cinemaTime: number) {
     if (!isBoss) {
       this.ronin(a as Player, mode);
+      return;
+    }
+    if ('kind' in a && a.kind !== 'warden') {
+      this.sentry(a as Boss);
       return;
     }
     const c = this.ctx,
@@ -1258,7 +1388,25 @@ export class Renderer {
       a = e.angle || 0;
     c.save();
     c.globalAlpha = 1 - t;
-    if (['slash', 'heavy', 'bossSlash'].includes(e.kind)) {
+    if (e.kind === 'draw') {
+      const end = this.project(
+        e.x + Math.cos(a) * (e.radius ?? 3),
+        e.y + Math.sin(a) * (e.radius ?? 3),
+      );
+      const from = { x: q.x, y: q.y - 36 },
+        to = { x: end.x, y: end.y - 36 };
+      this.line(from, to, '#ffffff', Math.max(1, (1 - t) * 7));
+      this.line({ x: from.x, y: from.y + 5 }, { x: to.x, y: to.y + 5 }, '#dddddd66', 12 * (1 - t));
+      for (let i = 1; i < 4; i++) {
+        const f = i / 4;
+        this.line(
+          { x: from.x + (to.x - from.x) * f - 8, y: from.y + (to.y - from.y) * f - 24 * t },
+          { x: from.x + (to.x - from.x) * f + 8, y: from.y + (to.y - from.y) * f + 24 * t },
+          '#ffffff',
+          1,
+        );
+      }
+    } else if (['slash', 'heavy', 'bossSlash'].includes(e.kind)) {
       const r = e.kind === 'bossSlash' ? 2.7 : e.kind === 'heavy' ? 2.2 : 1.7;
       this.groundArc(
         e.x,

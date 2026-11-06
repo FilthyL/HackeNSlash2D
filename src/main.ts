@@ -1,12 +1,12 @@
 import './style.css';
-import { Battle, type Input } from './combat';
+import { Battle, type Input, type Stage, type Vow } from './combat';
 import { Renderer } from './renderer';
 import { Soundscape } from './audio';
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const battle = new Battle(),
   renderer = new Renderer($<HTMLCanvasElement>('world')),
   sound = new Soundscape();
-type Mode = 'title' | 'intro' | 'fight' | 'phase' | 'ending' | 'victory' | 'defeat';
+type Mode = 'title' | 'intro' | 'fight' | 'phase' | 'ending' | 'victory' | 'defeat' | 'remembrance';
 let mode: Mode = 'title',
   sceneTime = 0,
   last = 0,
@@ -15,7 +15,13 @@ let mode: Mode = 'title',
   messageTime = 0,
   lastBeat = -1;
 const keys = new Set<string>(),
-  pulse = { attack: false, dodge: false, parry: false, heavy: false };
+  pulse = { attack: false, dodge: false, parry: false, heavy: false, special: false };
+let savedVow: Vow | null = null;
+try {
+  const stored = localStorage.getItem('ashen-vow-checkpoint');
+  if (stored === 'mercy' || stored === 'resolve') savedVow = stored;
+} catch {}
+if (savedVow) $('duel').textContent = 'RESUME AT THE BELL';
 const modal = $<HTMLDialogElement>('modal');
 function show(id: string, visible: boolean) {
   $(id).classList.toggle('hidden', !visible);
@@ -26,9 +32,25 @@ function hud() {
   $('player-health').style.width = `${(p.hp / p.maxHp) * 100}%`;
   $('player-stamina').style.width = `${p.stamina}%`;
   $('player-health-text').textContent = `${p.hp} / ${p.maxHp}`;
-  $('boss-health').style.width = `${(b.hp / b.maxHp) * 100}%`;
-  $('boss-percent').textContent = `${Math.ceil((b.hp / b.maxHp) * 100)}%`;
-  $('boss-phase').textContent = b.phase === 1 ? 'I · THE OATHBOUND' : 'II · THE UNBURIED';
+  const gate = battle.stage === 'gate',
+    guards = battle.guards;
+  const hp = gate ? guards.reduce((n, g) => n + g.hp, 0) : b.hp,
+    max = gate ? guards.reduce((n, g) => n + g.maxHp, 0) : b.maxHp;
+  $('enemy-name').textContent = gate ? 'THE MEN AT THE GATE' : 'LORD KURODA';
+  $('enemy-subtitle').textContent = gate ? 'SOTA & IORI · THE LAST WATCH' : 'THE HOLLOW WARDEN';
+  $('boss-health').style.width = `${(hp / max) * 100}%`;
+  $('resolve-pips').textContent = Array.from({ length: 3 }, (_, i) =>
+    i < p.resolve ? '●' : '○',
+  ).join(' ');
+  $('resolve-button').classList.toggle('charged', p.resolve > 0);
+  $('resolve-button').setAttribute('aria-label', `Stillness Cut, Q, ${p.resolve} of 3 charges`);
+  document.querySelector('[data-action="special"]')?.classList.toggle('charged', p.resolve > 0);
+  $('boss-percent').textContent = `${Math.ceil((hp / max) * 100)}%`;
+  $('boss-phase').textContent = gate
+    ? `${guards.filter((g) => g.hp > 0).length} STILL BOUND`
+    : b.phase === 1
+      ? 'I · THE OATHBOUND'
+      : 'II · THE UNBURIED';
 }
 function clearInput() {
   keys.clear();
@@ -48,6 +70,7 @@ function setMode(next: Mode) {
   show('touch-controls', mode === 'fight');
   show('cinema', cinematic);
   show('reveal', false);
+  show('interlude', mode === 'remembrance');
   show('outcome', mode === 'victory' || mode === 'defeat');
   $('combat-message').textContent = '';
   messageTime = 0;
@@ -62,6 +85,13 @@ function setMode(next: Mode) {
     $('outcome-copy').textContent = win
       ? 'Inside the broken bell: hundreds of stolen names. Your sister’s is the last. The final stroke is missing.'
       : 'He taught you how to hold a blade. Now learn when to let it pass. Watch the white marks, parry the steel, and dodge through the bell’s wave.';
+    $('encounter-stats').textContent =
+      `${battle.stats.parries} PERFECT PARRIES · ${battle.stats.draws} STILLNESS CUTS · ${Math.round(battle.time + battle.priorTime)}s`;
+    $('retry').innerHTML = win
+      ? 'DUEL AGAIN <b>↗</b>'
+      : battle.stage === 'gate'
+        ? 'RETURN TO THE GATE <b>↗</b>'
+        : 'RETRY FROM THE BELL <b>↗</b>';
     if (win) {
       try {
         localStorage.setItem('ashen-vow-chapter-1', 'complete');
@@ -69,14 +99,23 @@ function setMode(next: Mode) {
     }
   }
 }
-function start(skipIntro = false) {
-  battle.reset();
+function start(skipIntro = false, stage: Stage = 'gate', vow: Vow | null = null) {
+  battle.reset(stage, vow);
   paused = false;
   setMode(skipIntro ? 'fight' : 'intro');
   if (!skipIntro) {
-    dialogue('REN TAKAMORI', 'I came for the names.');
+    dialogue(
+      'REN TAKAMORI',
+      stage === 'gate' ? 'Sota. Iori. Stand aside.' : 'I came for the names.',
+    );
     sound.play('bell');
-  } else notify('WATCH THE GROUND. TRUST YOUR BLADE.', 4);
+  } else
+    notify(
+      battle.stage === 'gate'
+        ? 'K · PARRY THEIR STEEL. Q · ANSWER WITH STILLNESS.'
+        : 'WATCH THE GROUND. TRUST YOUR BLADE.',
+      4,
+    );
 }
 function dialogue(speaker: string, line: string) {
   $('speaker').textContent = speaker;
@@ -90,7 +129,12 @@ function notify(text: string, duration = 1.5) {
 function endScene() {
   if (mode === 'intro') {
     setMode('fight');
-    notify('WATCH THE GROUND. TRUST YOUR BLADE.', 4);
+    notify(
+      battle.stage === 'gate'
+        ? 'K · PARRY THEIR STEEL. Q · ANSWER WITH STILLNESS.'
+        : 'WATCH THE GROUND. TRUST YOUR BLADE.',
+      4,
+    );
   } else if (mode === 'phase') {
     battle.resumePhase();
     setMode('fight');
@@ -98,6 +142,20 @@ function endScene() {
   } else if (mode === 'ending') setMode('victory');
 }
 function cinematic() {
+  if (mode === 'intro' && battle.stage === 'gate') {
+    const beats = [
+      ['REN TAKAMORI', 'Sota. Iori. Stand aside.'],
+      ['THE LAST WATCH', 'We were ordered to wait for you.'],
+      ['REN TAKAMORI', 'Then let this be the last order you obey.'],
+    ];
+    const beat = Math.min(2, Math.floor(sceneTime / 3));
+    if (beat !== lastBeat) {
+      lastBeat = beat;
+      dialogue(...(beats[beat] as [string, string]));
+    }
+    if (sceneTime > 9.5) endScene();
+    return;
+  }
   if (mode === 'intro') {
     const beats = [
       ['REN TAKAMORI', 'I came for the names.'],
@@ -151,7 +209,7 @@ function getInput(): Input {
     sy =
       Number(keys.has('s') || keys.has('arrowdown')) - Number(keys.has('w') || keys.has('arrowup'));
   const input = { x: (sx + sy) * Math.SQRT1_2, y: (sy - sx) * Math.SQRT1_2, ...pulse };
-  pulse.attack = pulse.dodge = pulse.parry = pulse.heavy = false;
+  pulse.attack = pulse.dodge = pulse.parry = pulse.heavy = pulse.special = false;
   return input;
 }
 function frame(now: number) {
@@ -176,8 +234,22 @@ function frame(now: number) {
           renderer.shake = 12;
           renderer.flash = 0.22;
           hitstop = 0.08;
-          notify('OATHBREAKER', 1.4);
+          notify(
+            battle.stats.parries === 1
+              ? 'RESOLVE EARNED · Q TO USE STILLNESS CUT'
+              : 'PERFECT PARRY · RESOLVE +1',
+            2,
+          );
         }
+        if (e === 'draw') {
+          renderer.shake = 8;
+          hitstop = 0.08;
+          notify('STILLNESS CUT', 1.1);
+        }
+        if (e === 'needResolve') notify('EARN RESOLVE WITH A PERFECT PARRY', 1.8);
+        if (e === 'outOfReach') notify('CLOSE THE DISTANCE', 1);
+        if (e === 'guardFell') notify('A NAME RETURNS', 1.4);
+        if (e === 'gateClear') setMode('remembrance');
         if (e === 'phase') setMode('phase');
         if (e === 'victory') {
           setMode('ending');
@@ -202,7 +274,23 @@ function frame(now: number) {
   requestAnimationFrame(frame);
 }
 $('begin').addEventListener('click', () => start());
-$('retry').addEventListener('click', () => start(true));
+$('retry').addEventListener('click', () => start(true, battle.stage, battle.vow));
+$('duel').addEventListener('click', () => start(false, 'warden', savedVow));
+$('resolve-button').addEventListener('click', () => {
+  if (mode === 'fight' && !paused) pulse.special = true;
+});
+for (const vow of ['mercy', 'resolve'] as const)
+  $('choose-' + vow).addEventListener('click', () => {
+    battle.beginWarden(vow);
+    savedVow = vow;
+    try {
+      localStorage.setItem('ashen-vow-checkpoint', vow);
+    } catch {}
+    $('duel').textContent = 'RESUME AT THE BELL';
+    setMode('intro');
+    dialogue('REN TAKAMORI', 'I came for the names.');
+    sound.play('bell');
+  });
 $('return-title').addEventListener('click', () => {
   battle.reset();
   setMode('title');
@@ -229,6 +317,7 @@ window.addEventListener('keydown', (e) => {
   if (key === 'k') pulse.parry = true;
   if (key === ' ') pulse.dodge = true;
   if (key === 'e') pulse.heavy = true;
+  if (key === 'q') pulse.special = true;
 });
 window.addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
 window.addEventListener('blur', () => {
@@ -255,7 +344,7 @@ $('sound-button').addEventListener('click', async () => {
   $('sound-button').setAttribute('aria-label', enabled ? 'Disable sound' : 'Enable sound');
   if (enabled) sound.play('bell');
 });
-const controls = `<span class="eyebrow">A MOMENT BEFORE THE BLADE</span><h2>Learn his rhythm.</h2><dl><dt>W A S D / arrows</dt><dd>Move around the courtyard.</dd><dt>J / left click</dt><dd>Cut. Chain three cuts for a stronger finisher. Face your foe automatically at close range.</dd><dt>K / right click</dt><dd>Parry just before steel connects. A perfect parry staggers Kuroda and restores stamina.</dd><dt>Space</dt><dd>Dodge in your movement direction. Dodge through the expanding bell wave.</dd><dt>E</dt><dd>Heavy cut. Costs stamina and leaves you briefly committed.</dd><dt>Escape</dt><dd>Pause and catch your breath.</dd></dl><p class="modal-tip">White marks show where the next attack will land. Strike during his recovery. The bell wave cannot be parried. Touch controls appear on touch devices.</p>`;
+const controls = `<span class="eyebrow">A MOMENT BEFORE THE BLADE</span><h2>Learn his rhythm.</h2><dl><dt>W A S D / arrows</dt><dd>Move around the courtyard.</dd><dt>J / left click</dt><dd>Cut. Chain three cuts for a stronger finisher. Face your foe automatically at close range.</dd><dt>K / right click</dt><dd>Parry just before steel connects. A perfect parry staggers the attacker, restores stamina, and earns Resolve.</dd><dt>Space</dt><dd>Dodge in your movement direction. Dodge through the expanding bell wave.</dd><dt>E</dt><dd>Heavy cut. Costs stamina and leaves you briefly committed.</dd><dt>Q / Stillness</dt><dd>Perfect parries earn Resolve (up to three charges). Spend one to dash into a close foe with a powerful, invulnerable draw cut.</dd><dt>Escape</dt><dd>Pause and catch your breath.</dd></dl><p class="modal-tip">White marks show where the next attack will land. Strike during his recovery. The bell wave cannot be parried. Touch controls appear on touch devices.</p>`;
 const chronicle = `<span class="eyebrow">ASHEN VOW · THE CHRONICLE</span><h2>Some debts survive death.</h2><p>The Quiet Accord learned to preserve the names and last words of the dead inside bronze bells. Then its ministers learned to take those names without permission. Communities lost the memory of why they had resisted. Massacres became unfortunate weather. Grief remained, but nobody could say who was missing.</p><h3>Ren Takamori · The Uncounted</h3><p>A Japanese samurai taught by Lord Kuroda to count every soldier home, Ren held a mountain road while his commander promised refugees another way out. There was no safe route. Ren returned to a family that could no longer remember his sister Aki. Only her name, scratched into his sword guard, survived the bell. Seven years later, he returns to the shrine above that road to confront the man he obeyed—and the choice he made.</p><h3>Lord Kuroda · The Hollow Warden</h3><p>Kuroda sealed the road and helped fill the bell. Now he contains its stolen names inside his own armour. His vigil is a punishment he appointed for himself because it was easier than facing the survivors. The people holding him upright have not forgotten.</p><h3>Lady Eleanor Vale · The Knight Who Signed</h3><p>An English knight celebrated for ending a siege through negotiation, Eleanor signed a warrant sending villagers to an Accord relief house. It had no kitchen. Years later, a surviving child asked where her mother was buried. Eleanor now carries the original warrant sewn inside her surcoat, seeking evidence that will condemn herself alongside the officials who designed the system.</p><h3>Lin Yue · The Vermilion Exile</h3><p>A Chinese jian swordswoman raised in a family of printers, Lin corrected a provincial register that falsely described a village as abandoned. The Accord seized the printing house; her father surrendered his name to save her. She now distributes forbidden testimony inside ordinary broadsheets, learning that an accurate account cannot make its readers choose justice.</p><h3>Meera · The Keeper of the Last Crossing</h3><p>A warrior from a coastal community informed by Kerala’s martial traditions, Meera helped a stranded Accord vessel before discovering its cargo of stolen names. Her brother refused an order to burn them. The struggle sank their ferry. She follows the river upstream with one sealed vessel that speaks in his voice—and knows things he never knew.</p><p class="modal-tip">An original fantasy world informed by distinct cultural references. This prototype implements Ren’s first duel; the other protagonists are planned chapters. Full stories and encounter scripts are included in the project’s docs folder.</p>`;
 function openModal(kind: 'controls' | 'story' | 'pause') {
   paused = true;
@@ -264,7 +353,7 @@ function openModal(kind: 'controls' | 'story' | 'pause') {
     kind === 'story'
       ? chronicle
       : kind === 'pause'
-        ? `<span class="eyebrow">THE COURTYARD WAITS</span><h2>A breath between blows.</h2><p>The encounter is paused. Close this panel or press Escape to resume.</p><button class="primary" id="resume">RETURN TO THE DUEL <b>↗</b></button><h3>Remember</h3><p>J to cut · K to parry · Space to dodge · E for a heavy cut. Dodge through the bell wave; parry the sword.</p>`
+        ? `<span class="eyebrow">THE COURTYARD WAITS</span><h2>A breath between blows.</h2><p>The encounter is paused. Close this panel or press Escape to resume.</p><button class="primary" id="resume">RETURN TO THE DUEL <b>↗</b></button><h3>Remember</h3><p>J to cut · K to parry · Space to dodge · E for a heavy cut · Q for Stillness Cut after a perfect parry. Dodge through the bell wave; parry the sword.</p>`
         : controls;
   modal.showModal();
   document.getElementById('resume')?.addEventListener('click', () => modal.close());
@@ -308,6 +397,9 @@ Object.defineProperty(window, 'ashenVow', {
       paused,
       player: { ...battle.player },
       boss: { ...battle.boss },
+      stage: battle.stage,
+      guards: battle.guards.map((g) => ({ ...g })),
+      stats: { ...battle.stats },
       state: battle.state,
       time: battle.time,
     }),

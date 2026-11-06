@@ -78,3 +78,19 @@ The chapter card reads **A NAME REMAINS**. The player can replay the duel or rea
 6. **Next protagonist:** Eleanor's guard mechanics and archive encounter. Build one complete dramatic fight per character before building a campaign map.
 
 Treat cinematic spectacle as choreography: anticipation, a precise impact, and enough quiet to feel its consequence. Every effect should reveal threat, character, or story. The first release does not require voice acting, video cutscenes, multiplayer, a backend, or a large download.
+
+## Implemented chapter expansion: The Men at the Gate
+
+Before Kuroda speaks, two figures answer Ren from beneath paper face-wraps. Sota, a swordsman, taught him to rewrap a sword grip after his first winter campaign. Iori, a spearman, used to leave the last rice ball for Aki. They have no grand titles. They were men who did small kindnesses, and they are still obeying an order that should have ended with their deaths.
+
+Ren: “Sota. Iori. Stand aside.”
+
+The last watch: “We were ordered to wait for you.”
+
+Ren: “Then let this be the last order you obey.”
+
+Both sentries fight at once with separate ground warnings. Their slower sword sweep and spear thrust introduce parrying and spacing before the Warden's bell wave. Perfect parries earn Resolve; Ren can spend a charge on **Stillness Cut**, a brief protected advance followed by a committed draw strike. Resolve caps at three charges. The attack has limited range and requires a living target.
+
+After their defeat, Ren ties their returned names beneath his sword guard. A quiet remembrance screen lets the player choose Sota's Knot (120 maximum health) or Iori's Promise (one starting Stillness Cut). Either choice restores health and saves a checkpoint at the bell. Defeat during the boss duel retries that duel with the chosen remembrance. Returning to the title or reopening the browser offers the saved checkpoint; starting the chapter again still allows the gate encounter to be replayed.
+
+The boss's existing dialogue, transformation, and ending remain the chapter's conclusion. Results now show perfect parries, Stillness Cuts, and encounter time. The other protagonists remain future chapters.

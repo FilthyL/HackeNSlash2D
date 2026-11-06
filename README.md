@@ -2,11 +2,13 @@
 
 **Chapter I: The Bell That Would Not Mourn**
 
-A small, cinematic isometric boss-fight prototype. Play Ren Takamori, a Japanese samurai returning to confront his former commander, Lord Kuroda—the Hollow Warden—in a storm-lashed shrine courtyard.
+A small, cinematic isometric action chapter. Play Ren Takamori, a Japanese samurai returning to confront his former commander, Lord Kuroda—the Hollow Warden—in a storm-lashed shrine courtyard.
 
 Chapter I uses a black-and-white storm palette. Ren wears a woven kasa, a windblown kimono jacket, and black hakama. Layered rain, swaying trees, ground ripples, lightning, and synthesized wind and thunder establish the atmosphere. Sound remains opt-in, and reduced-motion mode removes lightning and tree sway.
 
-The encounter includes an opening cutscene, boss reveal, a second-phase transition, defeat and retry, and a story ending. Combat centres on reading attacks, chaining sword cuts, timed parries, dodging, and committed heavy strikes. Other protagonists have written story treatments; Ren is the only playable character.
+The chapter opens with The Men at the Gate: two oathbound former comrades, a swordsman and a spearman. Defeat them, choose a remembrance, and continue to the boss duel. The chapter includes opening cutscenes, a boss reveal, a second-phase transition, defeat and retry, and a story ending. Combat centres on reading attacks, chaining sword cuts, timed parries, dodging, and committed heavy strikes. Perfect parries earn up to three Resolve charges; Q spends one on Stillness Cut, an invulnerable draw-and-dash strike. Remembrances grant either 120 maximum health or a starting Resolve charge for the duel. Choosing one saves a boss checkpoint in this browser; the title screen then offers Resume at the Bell. Duel Kuroda remains available for immediate boss practice before a checkpoint is saved.
+
+Other protagonists have written story treatments; Ren is the only playable character.
 
 ## Run locally
 
@@ -23,6 +25,9 @@ Vite serves the game on port 5173 when available. Open the address printed by Vi
 npm test       # Combat simulation tests
 npm run build # TypeScript checks and production build
 npm run preview
+# With the preview running on port 4173:
+npm run test:encounter # Direct boss duel, ending, defeat and retry
+npm run test:chapter   # Full chapter, both remembrances and saved checkpoint
 ```
 
 The browser smoke test expects a running development server at `http://127.0.0.1:5173`. It uses system Chromium at `/usr/bin/chromium` when available, or Playwright’s installed Chromium. Override these with `TEST_URL` and `CHROMIUM_PATH`:
@@ -43,6 +48,7 @@ It exercises desktop interaction and mobile viewport behaviour, and saves screen
 | Parry | K / right click on the arena |
 | Dodge | Space |
 | Heavy cut | E |
+| Stillness Cut | Q / ability button; costs one Resolve |
 | Pause / resume | Escape |
 | Skip cutscene | Enter / on-screen skip button |
 
@@ -67,7 +73,7 @@ TypeScript, native Canvas 2D, and Vite. There is no runtime game framework or ba
 - [Story bible](docs/STORY_BIBLE.md): world, Ren, English knight Eleanor Vale, Chinese swordswoman Lin Yue, and Kerala-informed warrior Meera.
 - [First-boss screenplay and roadmap](docs/FIRST_BOSS.md): cinematic intentions, encounter structure, and staged expansion.
 
-This is one playable duel, not a full campaign. The documents include future narrative and visual targets that exceed the current implementation. Character animation, balance, accessibility, mobile controls, and performance should continue to be tested and refined before release.
+This is one playable chapter with a two-sentry encounter and a two-phase boss, not a full campaign. The documents include future narrative and visual targets that exceed the current implementation. Character animation, balance, accessibility, mobile controls, and performance should continue to be tested and refined before release.
 
 ## Trial deployment
 

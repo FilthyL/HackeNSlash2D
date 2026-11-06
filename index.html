@@ -37,7 +37,8 @@
         <h1>The bell that<br />would not<br /><em>mourn.</em></h1>
         <p>The dead have lost their names.<br />Your old master knows why.</p>
         <button id="begin" class="primary"><span>DRAW YOUR BLADE</span><b>↗</b></button>
-        <div class="start-note">A PLAYABLE BOSS ENCOUNTER <span>•</span> 3–5 MINUTES</div>
+        <button id="duel" class="text-button chapter-shortcut">DUEL KURODA</button>
+        <div class="start-note">A CHAPTER IN TWO ENCOUNTERS <span>•</span> 3–5 MINUTES</div>
       </main>
       <div id="scene-label">
         <span>葬鐘</span>
@@ -45,11 +46,11 @@
       </div>
       <div id="boss-hud" class="hidden">
         <div class="boss-meta">
-          <span id="boss-phase">I · THE OATHBOUND</span><span>LORD KURODA</span
+          <span id="boss-phase">I · THE OATHBOUND</span><span id="enemy-name">LORD KURODA</span
           ><span id="boss-percent">100%</span>
         </div>
         <div class="boss-health-track"><div id="boss-health"></div></div>
-        <div class="boss-subtitle">THE HOLLOW WARDEN</div>
+        <div id="enemy-subtitle" class="boss-subtitle">THE HOLLOW WARDEN</div>
       </div>
       <div id="player-hud" class="hidden">
         <div class="player-seal">蓮</div>
@@ -57,6 +58,9 @@
           <div class="player-name">REN TAKAMORI <span id="player-health-text">100 / 100</span></div>
           <div class="health-track"><div id="player-health"></div></div>
           <div class="stamina-track"><div id="player-stamina"></div></div>
+          <button id="resolve-button" aria-label="Stillness Cut, Q">
+            <kbd>Q</kbd> STILLNESS CUT <span id="resolve-pips">○ ○ ○</span>
+          </button>
         </div>
         <button id="pause-button" aria-label="Pause encounter">Ⅱ</button>
       </div>
@@ -79,19 +83,50 @@
         <span class="eyebrow" id="outcome-label"></span>
         <h2 id="outcome-title"></h2>
         <p id="outcome-copy"></p>
+        <div id="encounter-stats"></div>
         <div class="outcome-actions">
           <button id="retry" class="primary">FACE HIM AGAIN <b>↗</b></button
           ><button id="return-title" class="text-button">RETURN TO THE COURTYARD</button>
         </div>
       </div>
+      <section id="interlude" class="hidden" aria-label="Choose a remembrance">
+        <div class="remembrance-copy">
+          <span class="eyebrow">THE MEN AT THE GATE · TWO NAMES RETURNED</span>
+          <h2>They remembered you.</h2>
+          <p>
+            Sota taught you to wrap a sword grip.<br />Iori always left the last rice ball for Aki.
+          </p>
+          <blockquote>“We were ordered to wait for you.”</blockquote>
+          <p>
+            You tie their names beneath your sword guard.<br />For the first time, the bell falls
+            silent.
+          </p>
+          <small>YOUR CHOICE RESTORES HEALTH AND SAVES AT THE BELL</small>
+        </div>
+        <div class="remembrance-choices">
+          <span class="eyebrow">CARRY ONE REMEMBRANCE</span>
+          <button id="choose-mercy" class="vow-card">
+            <span>01 / SOTA’S KNOT</span>
+            <h3>Let me endure.</h3>
+            <p>Begin the duel with 120 maximum health.</p>
+            <b>TAKE HIS REMEMBRANCE →</b>
+          </button>
+          <button id="choose-resolve" class="vow-card">
+            <span>02 / IORI’S PROMISE</span>
+            <h3>Let me answer.</h3>
+            <p>Begin the duel with one charged Stillness Cut.</p>
+            <b>TAKE HIS REMEMBRANCE →</b>
+          </button>
+        </div>
+      </section>
       <footer>
         <div class="edition">
-          <span class="live-dot"></span> FIRST BLOOD <span class="muted">/</span> PROTOTYPE 002
+          <span class="live-dot"></span> FIRST BLOOD <span class="muted">/</span> PROTOTYPE 003
         </div>
         <div id="footer-controls">
           <span><kbd>W A S D</kbd> MOVE</span><span><kbd>J</kbd> CUT</span
           ><span><kbd>K</kbd> PARRY</span><span><kbd>SPACE</kbd> DODGE</span
-          ><span><kbd>E</kbd> HEAVY</span>
+          ><span><kbd>E</kbd> HEAVY</span><span><kbd>Q</kbd> STILLNESS CUT</span>
         </div>
         <span class="footer-right">A VOW OUTLIVES THE BLADE.</span>
       </footer>
@@ -103,7 +138,9 @@
           ><button data-dir="right" aria-label="Move right">→</button>
         </div>
         <div class="touch-actions">
-          <button data-action="parry">PARRY</button><button data-action="heavy">HEAVY</button
+          <button data-action="special" class="touch-special" aria-label="Stillness Cut">
+            STILLNESS</button
+          ><button data-action="parry">PARRY</button><button data-action="heavy">HEAVY</button
           ><button data-action="dodge">DODGE</button><button data-action="attack">CUT</button>
         </div>
       </div>

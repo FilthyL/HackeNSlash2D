@@ -80,6 +80,11 @@ export class Soundscape {
         this.air(0.15, 1700, 0.42, 'highpass');
         this.tone(720, 240, 0.09, 0.1, 'triangle');
         break;
+      case 'draw':
+        this.air(0.36, 2300, 0.5, 'highpass');
+        this.chime(660, 1, 0.35);
+        this.tone(100, 30, 0.5, 0.5);
+        break;
       case 'heavy':
         this.air(0.34, 750, 0.45, 'bandpass');
         this.tone(135, 46, 0.36, 0.7, 'sine', 0.1);

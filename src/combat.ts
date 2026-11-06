@@ -1,5 +1,5 @@
 /** Deterministic combat simulation. Positions and radii are in ground-plane units. */
-export type BattleState = 'fight' | 'phase' | 'victory' | 'defeat';
+export type BattleState = 'fight' | 'phase' | 'victory' | 'defeat' | 'gateClear';
 export type AttackKind = 'sweep' | 'thrust' | 'bell';
 export interface Input {
   x: number;
@@ -8,6 +8,7 @@ export interface Input {
   dodge: boolean;
   parry: boolean;
   heavy: boolean;
+  special?: boolean;
 }
 export interface Player {
   x: number;
@@ -21,6 +22,7 @@ export interface Player {
   stamina: number;
   maxStamina: number;
   combo: number;
+  resolve: number;
 }
 export interface Boss {
   x: number;
@@ -32,6 +34,9 @@ export interface Boss {
   actionTime: number;
   phase: number;
   attackKind: AttackKind;
+  kind?: 'warden' | 'sword' | 'spear';
+  name?: string;
+  windupDuration?: number;
 }
 export interface Effect {
   kind: string;
@@ -50,7 +55,9 @@ export interface Telegraph {
   angle: number;
   progress: number;
 }
-type PlayerMove = 'attack' | 'heavy' | 'parry' | 'dodge';
+type PlayerMove = 'attack' | 'heavy' | 'parry' | 'dodge' | 'special';
+export type Stage = 'gate' | 'warden';
+export type Vow = 'mercy' | 'resolve';
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const angleDifference = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
 const distance = (a: { x: number; y: number }, b: { x: number; y: number }) =>
@@ -62,6 +69,30 @@ const BELL_DURATION = BELL_RADIUS / BELL_SPEED;
 export class Battle {
   player!: Player;
   boss!: Boss;
+  guards: Boss[] = [];
+  stage: Stage = 'warden';
+  vow: Vow | null = null;
+  priorTime = 0;
+  stats = { parries: 0, draws: 0, hitsTaken: 0, kills: 0 };
+
+  enemies(): Boss[] {
+    return this.stage === 'gate' ? this.guards.filter((g) => g.hp > 0) : [this.boss];
+  }
+  private target(): Boss {
+    return (
+      [...this.enemies()].sort((a, b) => distance(this.player, a) - distance(this.player, b))[0] ??
+      this.boss
+    );
+  }
+
+  beginWarden(vow: Vow) {
+    if (this.state !== 'gateClear') return;
+    const stats = { ...this.stats },
+      prior = this.time;
+    this.reset('warden', vow);
+    this.stats = stats;
+    this.priorTime = prior;
+  }
   state: BattleState = 'fight';
   time = 0;
   effects: Effect[] = [];
@@ -76,19 +107,29 @@ export class Battle {
   private phaseTriggered = false;
   private queuedMove: PlayerMove | null = null;
   private queuedUntil = 0;
-  private previousMoves = { attack: false, heavy: false, parry: false, dodge: false };
+  private previousMoves = {
+    attack: false,
+    heavy: false,
+    parry: false,
+    dodge: false,
+    special: false,
+  };
   private waves: { x: number; y: number; age: number; hit: boolean }[] = [];
 
   constructor() {
     this.reset();
   }
 
-  reset() {
+  reset(stage: Stage = 'warden', vow: Vow | null = null) {
+    this.stage = stage;
+    this.vow = vow;
+    this.priorTime = 0;
+    this.stats = { parries: 0, draws: 0, hitsTaken: 0, kills: 0 };
     this.player = {
       x: 1,
       y: 3,
-      hp: 100,
-      maxHp: 100,
+      hp: vow === 'mercy' ? 120 : 100,
+      maxHp: vow === 'mercy' ? 120 : 100,
       facing: -2,
       action: 'idle',
       actionTime: 0,
@@ -96,6 +137,7 @@ export class Battle {
       stamina: 100,
       maxStamina: 100,
       combo: 0,
+      resolve: vow === 'resolve' ? 1 : 0,
     };
     this.boss = {
       x: -1,
@@ -107,7 +149,35 @@ export class Battle {
       actionTime: 1.35,
       phase: 1,
       attackKind: 'sweep',
+      kind: 'warden',
+      name: 'LORD KURODA',
     };
+    this.guards =
+      stage === 'gate'
+        ? [
+            {
+              ...this.boss,
+              x: -2,
+              y: -1,
+              hp: 110,
+              maxHp: 110,
+              kind: 'sword',
+              name: 'SOTA',
+              actionTime: 1.6,
+            },
+            {
+              ...this.boss,
+              x: 2,
+              y: -2,
+              hp: 110,
+              maxHp: 110,
+              kind: 'spear',
+              name: 'IORI',
+              actionTime: 3.1,
+              attackKind: 'thrust',
+            },
+          ]
+        : [];
     this.state = 'fight';
     this.time = 0;
     this.effects = [];
@@ -123,7 +193,13 @@ export class Battle {
     this.waves = [];
     this.queuedMove = null;
     this.queuedUntil = 0;
-    this.previousMoves = { attack: false, heavy: false, parry: false, dodge: false };
+    this.previousMoves = {
+      attack: false,
+      heavy: false,
+      parry: false,
+      dodge: false,
+      special: false,
+    };
   }
 
   resumePhase() {
@@ -138,7 +214,13 @@ export class Battle {
     this.player.stamina = this.player.maxStamina;
     this.playerStrikeAt = -1;
     this.queuedMove = null;
-    this.previousMoves = { attack: false, heavy: false, parry: false, dodge: false };
+    this.previousMoves = {
+      attack: false,
+      heavy: false,
+      parry: false,
+      dodge: false,
+      special: false,
+    };
   }
 
   update(delta: number, input: Input) {
@@ -160,7 +242,11 @@ export class Battle {
     );
     this.updatePlayer(dt, input);
     if (this.state !== 'fight') return;
-    this.updateBoss(dt);
+    this.telegraphs = [];
+    for (const enemy of this.enemies()) {
+      if (this.state !== 'fight') break;
+      this.updateBoss(dt, enemy);
+    }
     if (this.state !== 'fight') return;
     this.updateWaves(dt);
     this.separateActors();
@@ -183,9 +269,9 @@ export class Battle {
     // The frontend emits one-frame pulses. Buffer a fresh press briefly so a
     // near-perfect combo/parry does not disappear during the last recovery frames.
     // Tracking edges also prevents held inputs from silently repeating actions.
-    const priority: PlayerMove[] = ['dodge', 'parry', 'heavy', 'attack'];
+    const priority: PlayerMove[] = ['dodge', 'parry', 'special', 'heavy', 'attack'];
     const pressed = priority.find((move) => input[move] && !this.previousMoves[move]);
-    for (const move of priority) this.previousMoves[move] = input[move];
+    for (const move of priority) this.previousMoves[move] = !!input[move];
     if (pressed) {
       this.queuedMove = pressed;
       this.queuedUntil = this.time + 0.12;
@@ -199,7 +285,7 @@ export class Battle {
       oldTime > this.playerStrikeAt &&
       p.actionTime <= this.playerStrikeAt
     ) {
-      this.strikeBoss(p.action === 'heavy');
+      this.strikeBoss(p.action === 'heavy', p.action === 'draw');
       this.playerStrikeAt = -1;
     }
     if (this.state !== 'fight') {
@@ -212,7 +298,7 @@ export class Battle {
     if (
       this.queuedMove === 'dodge' &&
       p.stamina >= 23 &&
-      !['dodge', 'heavy', 'hurt'].includes(p.action)
+      !['dodge', 'heavy', 'draw', 'hurt'].includes(p.action)
     ) {
       p.stamina -= 23;
       p.action = 'dodge';
@@ -230,12 +316,35 @@ export class Battle {
       p.x += Math.cos(this.dodgeAngle) * 10 * dt;
       p.y += Math.sin(this.dodgeAngle) * 10 * dt;
     } else if (p.action === 'idle' || p.action === 'run') {
-      if (this.queuedMove === 'parry' && p.stamina >= 12) {
+      const target = this.target();
+      if (this.queuedMove === 'special') {
+        this.queuedMove = null;
+        if (p.resolve < 1) {
+          this.events.push('needResolve');
+          return;
+        }
+        if (distance(p, target) > 4.8) {
+          this.events.push('outOfReach');
+          return;
+        }
+        p.resolve--;
+        this.stats.draws++;
+        p.facing = Math.atan2(target.y - p.y, target.x - p.x);
+        const reach = distance(p, target);
+        this.effect('draw', p.x, p.y, 0.6, p.facing, reach + 0.5);
+        p.x = clamp(target.x - Math.cos(p.facing) * 0.9, -4.8, 4.8);
+        p.y = clamp(target.y - Math.sin(p.facing) * 0.9, -4.8, 4.8);
+        p.action = 'draw';
+        p.actionTime = 0.5;
+        p.invulnerable = 0.52;
+        this.playerStrikeAt = 0.28;
+        this.events.push('draw');
+      } else if (this.queuedMove === 'parry' && p.stamina >= 12) {
         p.stamina -= 12;
         p.action = 'parry';
         p.actionTime = 0.42;
         this.parryAge = 0;
-        p.facing = Math.atan2(this.boss.y - p.y, this.boss.x - p.x);
+        p.facing = Math.atan2(target.y - p.y, target.x - p.x);
         this.effect('guard', p.x, p.y, 0.42, p.facing);
         this.queuedMove = null;
       } else if ((this.queuedMove === 'heavy' && p.stamina >= 30) || this.queuedMove === 'attack') {
@@ -248,8 +357,7 @@ export class Battle {
           p.combo = (p.combo % 3) + 1;
           this.comboTime = 0.95;
         }
-        if (distance(p, this.boss) < 3.1)
-          p.facing = Math.atan2(this.boss.y - p.y, this.boss.x - p.x);
+        if (distance(p, target) < 3.1) p.facing = Math.atan2(target.y - p.y, target.x - p.x);
         this.events.push(heavy ? 'heavy' : 'slash');
         this.effect(heavy ? 'heavy' : 'slash', p.x, p.y, heavy ? 0.6 : 0.32, p.facing);
         this.queuedMove = null;
@@ -268,63 +376,77 @@ export class Battle {
     p.y = clamp(p.y, -4.8, 4.8);
   }
 
-  private strikeBoss(heavy: boolean) {
-    const p = this.player,
-      b = this.boss;
-    const angle = Math.atan2(b.y - p.y, b.x - p.x);
-    if (distance(p, b) > (heavy ? 2.25 : 1.95) || Math.abs(angleDifference(angle, p.facing)) > 1.3)
-      return;
-    const damage = heavy ? 42 : p.combo === 3 ? 28 : 18;
-    b.hp = Math.max(0, b.hp - damage);
-    this.events.push('hit');
-    this.effect('impact', b.x, b.y, 0.38, p.facing);
-    if (b.hp <= 0) {
-      this.state = 'victory';
-      b.action = 'dead';
-      b.actionTime = 0;
-      this.telegraphs = [];
-      this.waves = [];
-      this.events.push('victory');
-      return;
+  private strikeBoss(heavy: boolean, special = false) {
+    const p = this.player;
+    for (const b of this.enemies()) {
+      const angle = Math.atan2(b.y - p.y, b.x - p.x);
+      if (
+        distance(p, b) > (special ? 2.5 : heavy ? 2.25 : 1.95) ||
+        Math.abs(angleDifference(angle, p.facing)) > 1.3
+      )
+        continue;
+      const damage = special ? 72 : heavy ? 42 : p.combo === 3 ? 28 : 18;
+      b.hp = Math.max(0, b.hp - damage);
+      this.events.push('hit');
+      this.effect('impact', b.x, b.y, 0.38, p.facing);
+      if (b.hp <= 0) {
+        b.action = 'dead';
+        b.actionTime = 0;
+        this.stats.kills++;
+        if (this.stage === 'gate') {
+          this.events.push('guardFell');
+          continue;
+        }
+        this.state = 'victory';
+        this.telegraphs = [];
+        this.waves = [];
+        this.events.push('victory');
+        return;
+      }
+      if (this.stage === 'warden' && b.hp <= b.maxHp / 2 && !this.phaseTriggered) {
+        this.phaseTriggered = true;
+        this.state = 'phase';
+        b.phase = 2;
+        this.telegraphs = [];
+        this.waves = [];
+        this.events.push('phase');
+        return;
+      }
+      if ((heavy && b.action !== 'windup') || special) {
+        b.action = 'stagger';
+        b.actionTime = special ? 1 : 0.6;
+      }
     }
-    if (b.hp <= b.maxHp / 2 && !this.phaseTriggered) {
-      this.phaseTriggered = true;
-      this.state = 'phase';
-      b.phase = 2;
+    if (this.stage === 'gate' && this.guards.every((g) => g.hp <= 0)) {
+      this.state = 'gateClear';
       this.telegraphs = [];
-      this.waves = [];
-      this.events.push('phase');
-      return;
-    }
-    if (heavy && b.action !== 'windup') {
-      b.action = 'stagger';
-      b.actionTime = 0.6;
+      this.queuedMove = null;
+      this.events.push('gateClear');
     }
   }
 
-  private updateBoss(dt: number) {
-    const b = this.boss,
-      p = this.player;
+  private updateBoss(dt: number, b: Boss) {
+    const p = this.player;
     b.actionTime -= dt;
     if (b.action === 'windup') {
-      this.telegraphs = [
-        {
-          kind: b.attackKind === 'sweep' ? 'arc' : b.attackKind === 'thrust' ? 'line' : 'ring',
-          x: b.x,
-          y: b.y,
-          radius: b.attackKind === 'bell' ? BELL_RADIUS : b.attackKind === 'thrust' ? 4.2 : 2.7,
-          angle: b.facing,
-          progress: clamp(1 - b.actionTime / this.windupDuration, 0, 1),
-        },
-      ];
-      if (b.actionTime <= 0) this.bossStrike();
+      if (b.actionTime <= 0) {
+        this.bossStrike(b);
+        return;
+      }
+      this.telegraphs.push({
+        kind: b.attackKind === 'sweep' ? 'arc' : b.attackKind === 'thrust' ? 'line' : 'ring',
+        x: b.x,
+        y: b.y,
+        radius: b.attackKind === 'bell' ? BELL_RADIUS : b.attackKind === 'thrust' ? 4.2 : 2.7,
+        angle: b.facing,
+        progress: clamp(1 - b.actionTime / (b.windupDuration ?? this.windupDuration), 0, 1),
+      });
       return;
     }
-    this.telegraphs = [];
     if (b.action === 'attack') {
       if (b.actionTime <= 0) {
         b.action = 'recover';
-        b.actionTime = b.phase === 2 ? 0.7 : 1.0;
+        b.actionTime = b.kind === 'warden' ? (b.phase === 2 ? 0.7 : 1) : 1.25;
       }
       return;
     }
@@ -343,26 +465,30 @@ export class Battle {
       b.x += Math.cos(b.facing) * speed * dt;
       b.y += Math.sin(b.facing) * speed * dt;
     } else b.action = 'idle';
-    if (b.actionTime <= 0 && (dist < 2.7 || this.attackIndex % 3 !== 0)) {
+    if (b.actionTime <= 0 && (dist < 2.7 || (b.kind === 'warden' && this.attackIndex % 3 !== 0))) {
       const sequence: AttackKind[] =
         b.phase === 2 ? ['sweep', 'thrust', 'bell', 'thrust'] : ['sweep', 'bell', 'thrust'];
-      b.attackKind = sequence[this.attackIndex++ % sequence.length]!;
+      b.attackKind =
+        b.kind === 'spear'
+          ? 'thrust'
+          : b.kind === 'sword'
+            ? 'sweep'
+            : sequence[this.attackIndex++ % sequence.length]!;
       this.windupDuration =
         (b.attackKind === 'bell' ? 1.25 : b.attackKind === 'thrust' ? 0.95 : 0.85) *
         (b.phase === 2 ? 0.82 : 1);
+      b.windupDuration = this.windupDuration * (b.kind === 'warden' ? 1 : 1.3);
       b.action = 'windup';
-      b.actionTime = this.windupDuration;
+      b.actionTime = b.windupDuration;
     }
     b.x = clamp(b.x, -4.5, 4.5);
     b.y = clamp(b.y, -4.5, 4.5);
   }
 
-  private bossStrike() {
-    const b = this.boss,
-      p = this.player;
+  private bossStrike(b: Boss) {
+    const p = this.player;
     b.action = 'attack';
     b.actionTime = 0.34;
-    this.telegraphs = [];
     this.events.push('bossAttack');
     if (b.attackKind === 'bell') {
       this.waves.push({ x: b.x, y: b.y, age: 0, hit: false });
@@ -384,7 +510,8 @@ export class Battle {
       b.x = clamp(b.x + Math.cos(b.facing) * 1.5, -4.5, 4.5);
       b.y = clamp(b.y + Math.sin(b.facing) * 1.5, -4.5, 4.5);
     }
-    if (hits) this.hurtPlayer(b.attackKind === 'sweep' ? 18 : 24, true);
+    if (hits)
+      this.hurtPlayer(b.kind === 'warden' ? (b.attackKind === 'sweep' ? 18 : 24) : 12, true, b);
   }
 
   private updateWaves(dt: number) {
@@ -401,19 +528,21 @@ export class Battle {
     this.waves = this.waves.filter((w) => w.age < BELL_DURATION);
   }
 
-  private hurtPlayer(damage: number, canParry: boolean) {
-    const p = this.player,
-      b = this.boss;
+  private hurtPlayer(damage: number, canParry: boolean, b = this.boss) {
+    const p = this.player;
     if (p.invulnerable > 0 || this.state !== 'fight') return;
     if (canParry && p.action === 'parry' && this.parryAge <= 0.25) {
       b.action = 'stagger';
       b.actionTime = 1.4;
       p.stamina = Math.min(100, p.stamina + 30);
       p.invulnerable = 0.25;
+      p.resolve = Math.min(3, p.resolve + 1);
+      this.stats.parries++;
       this.events.push('parry');
       this.effect('parry', p.x, p.y, 0.65, p.facing);
       return;
     }
+    this.stats.hitsTaken++;
     const blocked = canParry && p.action === 'parry';
     p.hp = Math.max(0, p.hp - (blocked ? Math.round(damage * 0.35) : damage));
     p.invulnerable = 0.8;
@@ -433,12 +562,24 @@ export class Battle {
 
   private separateActors() {
     const p = this.player,
-      b = this.boss;
-    const d = distance(p, b);
-    if (d < 0.68 && p.action !== 'dodge') {
-      const angle = d < 0.001 ? p.facing + Math.PI : Math.atan2(p.y - b.y, p.x - b.x);
-      p.x = clamp(b.x + Math.cos(angle) * 0.68, -4.8, 4.8);
-      p.y = clamp(b.y + Math.sin(angle) * 0.68, -4.8, 4.8);
+      enemies = this.enemies();
+    for (const b of enemies) {
+      const d = distance(p, b);
+      if (d < 0.68 && p.action !== 'dodge') {
+        const angle = d < 0.001 ? p.facing + Math.PI : Math.atan2(p.y - b.y, p.x - b.x);
+        p.x = clamp(b.x + Math.cos(angle) * 0.68, -4.8, 4.8);
+        p.y = clamp(b.y + Math.sin(angle) * 0.68, -4.8, 4.8);
+      }
+    }
+    // The sentries retain separate silhouettes and cannot occupy the same spot.
+    if (enemies.length === 2) {
+      const [a, b] = enemies,
+        d = distance(a, b);
+      if (d < 1.1) {
+        const angle = Math.atan2(b.y - a.y, b.x - a.x);
+        b.x = clamp(a.x + Math.cos(angle) * 1.1, -4.5, 4.5);
+        b.y = clamp(a.y + Math.sin(angle) * 1.1, -4.5, 4.5);
+      }
     }
   }
 }

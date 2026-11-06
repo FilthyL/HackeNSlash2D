@@ -269,3 +269,138 @@ test('parry, heavy and dodge edge pulses survive the final recovery frames', () 
     assert.equal(b.player.action, move);
   }
 });
+
+test('gate encounter has two independent attack warnings and leaves Kuroda untouched', () => {
+  const b = new Battle();
+  b.reset('gate');
+  for (const g of b.guards) {
+    g.action = 'windup';
+    g.actionTime = 0.6;
+    g.windupDuration = 1;
+  }
+  advance(b, 0.05);
+  assert.equal(b.telegraphs.length, 2);
+  assert.deepEqual(new Set(b.telegraphs.map((t) => t.kind)), new Set(['arc', 'line']));
+  assert.equal(b.boss.hp, b.boss.maxHp);
+});
+
+test('a sentry parry staggers its source and earns one Resolve', () => {
+  const b = new Battle();
+  b.reset('gate');
+  const g = b.guards[1];
+  b.guards[0].action = 'recover';
+  b.guards[0].actionTime = 99;
+  b.player.x = g.x + 1.4;
+  b.player.y = g.y;
+  g.facing = 0;
+  g.action = 'windup';
+  g.actionTime = 0.12;
+  b.update(1 / 60, { ...idle, parry: true });
+  advance(b, 0.15);
+  assert.equal(b.player.hp, 100);
+  assert.equal(b.player.resolve, 1);
+  assert.equal(b.stats.parries, 1);
+  assert.equal(g.action, 'stagger');
+  assert.notEqual(b.boss.action, 'stagger');
+});
+
+test('Stillness Cut requires a charge, respects range and applies one delayed strike', () => {
+  const b = new Battle();
+  harmlessBoss(b);
+  b.player.x = b.boss.x + 3;
+  b.player.y = b.boss.y;
+  const start = b.player.x;
+  b.update(1 / 60, { ...idle, special: true });
+  advance(b, 0.1);
+  assert.equal(b.player.x, start);
+  assert.ok(b.events.includes('needResolve'));
+  b.player.resolve = 1;
+  b.player.x = 4.8;
+  b.player.y = 4.8;
+  b.update(1 / 60, { ...idle, special: true });
+  advance(b, 0.1);
+  assert.equal(b.player.resolve, 1);
+  assert.ok(b.events.includes('outOfReach'));
+  b.player.x = b.boss.x + 3;
+  b.player.y = b.boss.y;
+  b.update(1 / 60, { ...idle, special: true });
+  assert.equal(b.player.resolve, 0);
+  assert.equal(b.player.action, 'draw');
+  assert.equal(b.boss.hp, b.boss.maxHp);
+  assert.ok(b.player.invulnerable > 0);
+  advance(b, 0.6);
+  assert.equal(b.boss.hp, b.boss.maxHp - 72);
+  assert.equal(b.stats.draws, 1);
+  assert.equal(b.events.filter((e) => e === 'hit').length, 1);
+});
+
+test('the last sentry unlocks remembrance, not boss victory or phase two', () => {
+  const b = new Battle();
+  b.reset('gate');
+  for (const g of b.guards) {
+    g.action = 'recover';
+    g.actionTime = 99;
+  }
+  for (const g of b.guards) {
+    b.player.x = g.x + 1;
+    b.player.y = g.y;
+    for (let i = 0; i < 6; i++) {
+      b.update(1 / 60, { ...idle, attack: true });
+      advance(b, 0.4);
+    }
+  }
+  assert.equal(b.state, 'gateClear');
+  assert.equal(b.stats.kills, 2);
+  assert.equal(b.events.filter((e) => e === 'gateClear').length, 1);
+  assert.equal(b.events.includes('victory'), false);
+  assert.equal(b.events.includes('phase'), false);
+  assert.equal(b.boss.hp, b.boss.maxHp);
+});
+
+test('remembrance restores health, preserves achievements and applies the chosen vow', () => {
+  for (const vow of ['mercy', 'resolve'] as const) {
+    const b = new Battle();
+    b.reset('gate');
+    b.state = 'gateClear';
+    b.player.hp = 15;
+    b.stats.parries = 3;
+    b.time = 22;
+    b.beginWarden(vow);
+    assert.equal(b.stage, 'warden');
+    assert.equal(b.state, 'fight');
+    assert.equal(b.guards.length, 0);
+    assert.equal(b.player.hp, vow === 'mercy' ? 120 : 100);
+    assert.equal(b.player.hp, b.player.maxHp);
+    assert.equal(b.player.resolve, vow === 'resolve' ? 1 : 0);
+    assert.equal(b.stats.parries, 3);
+    assert.equal(b.priorTime, 22);
+    const snapshot = JSON.stringify(b.player);
+    b.beginWarden('mercy');
+    assert.equal(JSON.stringify(b.player), snapshot);
+    b.reset('warden', vow);
+    assert.equal(b.player.hp, vow === 'mercy' ? 120 : 100);
+    assert.equal(b.stats.parries, 0);
+  }
+});
+
+test('perfect parries cap Resolve at three and resetting a chapter clears charges', () => {
+  const b = new Battle();
+  b.player.x = b.boss.x + 1.3;
+  b.player.y = b.boss.y;
+  for (let i = 0; i < 4; i++) {
+    b.boss.facing = 0;
+    b.boss.action = 'windup';
+    b.boss.attackKind = 'sweep';
+    b.boss.actionTime = 0.1;
+    b.update(1 / 60, { ...idle, parry: true });
+    advance(b, 0.15);
+    b.boss.action = 'recover';
+    b.boss.actionTime = 99;
+    advance(b, 0.5);
+  }
+  assert.equal(b.player.resolve, 3);
+  assert.equal(b.stats.parries, 4);
+  b.reset('gate');
+  assert.equal(b.player.resolve, 0);
+  assert.equal(b.player.maxHp, 100);
+});

@@ -9,7 +9,9 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --import tsx tests/combat.test.ts",
     "test:browser": "node tests/browser-smoke.mjs",
-    "format": "prettier --write src tests index.html vite.config.ts"
+    "format": "prettier --write src tests index.html vite.config.ts",
+    "test:encounter": "node tests/browser-encounter.mjs",
+    "test:chapter": "node tests/browser-chapter.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",
