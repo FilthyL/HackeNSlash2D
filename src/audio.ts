@@ -1,10 +1,12 @@
-/** Small, gesture-unlocked sound palette. No downloads or persistent audio loops. */
+/** Small, gesture-unlocked sound palette. No downloads; the storm bed shares the user-controlled master mute. */
 export class Soundscape {
   enabled = false;
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
   private noiseBuffer: AudioBuffer | null = null;
   private voices = 0;
+  private stormStarted = false;
+  private paused = false;
   private recent = new Map<string, number>();
 
   async toggle(): Promise<boolean> {
@@ -53,7 +55,8 @@ export class Soundscape {
       this.enabled = true;
       const now = context.currentTime;
       this.master.gain.cancelScheduledValues(now);
-      this.master.gain.setTargetAtTime(0.19, now, 0.04);
+      this.master.gain.setTargetAtTime(this.paused ? 0 : 0.19, now, 0.04);
+      this.startStorm();
       this.play('bell');
       return true;
     } catch {
@@ -68,6 +71,11 @@ export class Soundscape {
     if (now - (this.recent.get(event) ?? -100) < 0.055) return;
     this.recent.set(event, now);
     switch (event) {
+      case 'thunder':
+        this.air(2.8, 140, 0.8, 'lowpass');
+        this.tone(55, 24, 2.5, 0.6);
+        this.air(1.8, 320, 0.22, 'lowpass', 0.35);
+        break;
       case 'slash':
         this.air(0.15, 1700, 0.42, 'highpass');
         this.tone(720, 240, 0.09, 0.1, 'triangle');
@@ -114,6 +122,44 @@ export class Soundscape {
         this.chime(220, 2.8, 0.32);
         break;
     }
+  }
+
+  setPaused(paused: boolean) {
+    if (this.paused === paused) return;
+    this.paused = paused;
+    if (this.context && this.master)
+      this.master.gain.setTargetAtTime(
+        this.enabled && !paused ? 0.19 : 0,
+        this.context.currentTime,
+        0.08,
+      );
+  }
+
+  private startStorm() {
+    if (this.stormStarted || !this.context || !this.noiseBuffer || !this.master) return;
+    const ctx = this.context,
+      source = ctx.createBufferSource(),
+      filter = ctx.createBiquadFilter(),
+      gain = ctx.createGain();
+    source.buffer = this.noiseBuffer;
+    source.loop = true;
+    filter.type = 'lowpass';
+    filter.frequency.value = 1800;
+    filter.Q.value = 0.4;
+    gain.gain.value = 0.24;
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.master);
+    // A slow oscillator swells the rain bed into gusts without fetching audio assets.
+    const gust = ctx.createOscillator(),
+      depth = ctx.createGain();
+    gust.frequency.value = 0.1;
+    depth.gain.value = 0.09;
+    gust.connect(depth);
+    depth.connect(gain.gain);
+    source.start();
+    gust.start();
+    this.stormStarted = true;
   }
 
   private chime(frequency: number, duration: number, volume: number, delay = 0) {

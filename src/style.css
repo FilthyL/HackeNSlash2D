@@ -1,11 +1,11 @@
 :root {
   font-family: Arial, Helvetica, sans-serif;
-  color: #eee5cf;
-  background: #171c1b;
+  color: #e5e5e5;
+  background: #1b1b1b;
   font-synthesis: none;
-  --bone: #eee5cf;
-  --red: #b44b35;
-  --muted: #a6a797;
+  --bone: #e5e5e5;
+  --red: #606060;
+  --muted: #a6a6a6;
 }
 * {
   box-sizing: border-box;
@@ -24,7 +24,7 @@ button {
 }
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid #ecc78a;
+  outline: 2px solid #cacaca;
   outline-offset: 6px;
 }
 button {
@@ -37,7 +37,7 @@ button {
   height: 100svh;
   min-height: 650px;
   overflow: hidden;
-  background: #252d28;
+  background: #2b2b2b;
 }
 #world,
 .grain,
@@ -55,13 +55,13 @@ button {
 .vignette {
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(12, 20, 19, 0.87), transparent 68%),
+    linear-gradient(90deg, rgba(18, 18, 18, 0.87), transparent 68%),
     linear-gradient(
       0deg,
-      rgba(13, 20, 19, 0.85),
+      rgba(18, 18, 18, 0.85),
       transparent 22%,
       transparent 80%,
-      rgba(14, 20, 19, 0.45)
+      rgba(19, 19, 19, 0.45)
     );
   transition: opacity 1s;
 }
@@ -94,17 +94,17 @@ header {
   font-size: 7px;
   letter-spacing: 2px;
   margin-top: 6px;
-  color: #a9b0a3;
+  color: #aeaeae;
 }
 .sigil {
   font-size: 29px;
-  background: #9e3c2b;
+  background: #505050;
   width: 40px;
   height: 45px;
   text-align: center;
   line-height: 45px;
   transform: rotate(-3deg);
-  color: #eeddbb;
+  color: #dedede;
 }
 .brand:hover .sigil {
   transform: rotate(3deg);
@@ -120,10 +120,10 @@ nav button {
   padding: 10px 0;
 }
 nav button:hover {
-  color: #df9572;
+  color: #a2a2a2;
 }
 .sound {
-  border-left: 1px solid #eeeecc30;
+  border-left: 1px solid #ececec30;
   padding-left: 26px;
 }
 .sound span {
@@ -140,7 +140,7 @@ main {
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 2.5px;
-  color: #c6b997;
+  color: #b9b9b9;
   display: flex;
   align-items: center;
   gap: 13px;
@@ -152,7 +152,7 @@ main {
 }
 .eyebrow i {
   font-style: normal;
-  color: #747e71;
+  color: #7b7b7b;
 }
 h1 {
   font:
@@ -161,17 +161,17 @@ h1 {
     serif;
   letter-spacing: -3px;
   margin: 25px 0 24px;
-  text-shadow: 0 3px 35px #17201b;
+  text-shadow: 0 3px 35px #1e1e1e;
 }
 h1 em {
   font-weight: normal;
-  color: #d8ad79;
+  color: #b2b2b2;
 }
 main p {
   font-size: 12px;
   line-height: 1.9;
   letter-spacing: 0.3px;
-  color: #b9c0b0;
+  color: #bdbdbd;
   margin-bottom: 30px;
 }
 .primary {
@@ -179,18 +179,18 @@ main p {
   align-items: center;
   justify-content: space-between;
   gap: 44px;
-  background: #b54d35;
+  background: #616161;
   padding: 19px 22px;
   min-width: 240px;
   font-size: 10px;
   letter-spacing: 1.8px;
-  box-shadow: 0 6px 24px #0d151c22;
+  box-shadow: 0 6px 24px #14141422;
   transition:
     background 0.2s,
     transform 0.2s;
 }
 .primary:hover {
-  background: #d06246;
+  background: #777777;
   transform: translateY(-2px);
 }
 .primary b {
@@ -201,12 +201,12 @@ main p {
 .start-note {
   font-size: 8px;
   letter-spacing: 1.2px;
-  color: #8f9c8e;
+  color: #989898;
   margin-top: 17px;
 }
 .start-note span {
   margin: 0 8px;
-  color: #bb6442;
+  color: #747474;
 }
 #scene-label {
   position: absolute;
@@ -220,22 +220,22 @@ main p {
   font:
     32px Georgia,
     serif;
-  color: #b4a386;
+  color: #a5a5a5;
   writing-mode: vertical-rl;
   letter-spacing: 8px;
-  border-right: 1px solid #c9bfa338;
+  border-right: 1px solid #bfbfbf38;
   padding-right: 16px;
 }
 #scene-label div {
   font-size: 9px;
   letter-spacing: 1.8px;
-  color: #d1c5a7;
+  color: #c5c5c5;
 }
 #scene-label small {
   display: block;
   font-size: 8px;
   margin-top: 9px;
-  color: #8e9b90;
+  color: #979797;
   letter-spacing: 1.6px;
 }
 footer {
@@ -247,7 +247,7 @@ footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #d8ceb522;
+  border-top: 1px solid #cecece22;
   font-size: 8px;
   letter-spacing: 1.3px;
   z-index: 6;
@@ -260,24 +260,24 @@ footer {
 .live-dot {
   width: 5px;
   height: 5px;
-  background: #bb6744;
+  background: #767676;
   border-radius: 100%;
 }
 .muted {
-  color: #66776c;
+  color: #737373;
   margin: 0 6px;
 }
 .footer-right {
   font:
     italic 11px Georgia,
     serif;
-  color: #959f8f;
+  color: #9c9c9c;
   letter-spacing: 0.5px;
 }
 #footer-controls {
   display: flex;
   gap: 16px;
-  color: #9aa798;
+  color: #a3a3a3;
   font-size: 8px;
 }
 #footer-controls > span {
@@ -289,9 +289,9 @@ kbd {
   font:
     8px Arial,
     sans-serif;
-  border: 1px solid #a2ae943d;
+  border: 1px solid #aaaaaa3d;
   padding: 4px 5px;
-  color: #c9cfba;
+  color: #cccccc;
   letter-spacing: 1px;
   border-radius: 2px;
 }
@@ -311,27 +311,27 @@ kbd {
   align-items: center;
   font-size: 8px;
   letter-spacing: 1.6px;
-  color: #c0b498;
+  color: #b5b5b5;
 }
 .boss-meta span:nth-child(2) {
   font:
     18px Georgia,
     serif;
   letter-spacing: 3px;
-  color: #ede1c5;
+  color: #e2e2e2;
 }
 .boss-health-track {
   height: 5px;
-  background: #0c1513;
+  background: #131313;
   margin-top: 12px;
-  border: 1px solid #b49d7044;
+  border: 1px solid #9f9f9f44;
   padding: 1px;
   box-sizing: content-box;
 }
 #boss-health {
   height: 100%;
   width: 100%;
-  background: #a74532;
+  background: #585858;
   transition: width 0.15s;
 }
 .boss-subtitle {
@@ -339,7 +339,7 @@ kbd {
   font-size: 7px;
   letter-spacing: 3px;
   margin-top: 9px;
-  color: #a6b09c;
+  color: #acacac;
 }
 #player-hud {
   position: absolute;
@@ -358,8 +358,8 @@ kbd {
   height: 45px;
   display: grid;
   place-items: center;
-  border: 1px solid #d9c18b66;
-  color: #e7c58b;
+  border: 1px solid #c2c2c266;
+  color: #c8c8c8;
   transform: rotate(-4deg);
 }
 .player-status {
@@ -373,33 +373,33 @@ kbd {
   margin-bottom: 9px;
 }
 .player-name span {
-  color: #a8b095;
+  color: #acacac;
   font-size: 7px;
   letter-spacing: 0;
 }
 .health-track {
   height: 4px;
-  background: #111b17;
+  background: #191919;
 }
 .health-track > div {
   height: 100%;
-  background: #d0c6a3;
+  background: #c6c6c6;
   transition: width 0.15s;
 }
 .stamina-track {
   height: 2px;
   margin-top: 5px;
-  background: #111b17;
+  background: #191919;
 }
 .stamina-track > div {
   height: 100%;
-  background: #ae8b4d;
+  background: #8e8e8e;
 }
 #pause-button {
   font-size: 19px;
   margin-left: 15px;
   padding: 10px;
-  color: #afba9c;
+  color: #b5b5b5;
 }
 #combat-message {
   position: absolute;
@@ -409,7 +409,7 @@ kbd {
   pointer-events: none;
   font-size: 11px;
   letter-spacing: 5px;
-  color: #f6df9f;
+  color: #dfdfdf;
   z-index: 7;
   transition: opacity 0.3s;
 }
@@ -424,7 +424,7 @@ kbd {
   left: 0;
   right: 0;
   height: 11%;
-  background: #101715;
+  background: #151515;
   transition: height 0.4s;
 }
 .letterbox.top {
@@ -444,11 +444,11 @@ kbd {
   left: 20%;
   right: 20%;
   text-align: center;
-  text-shadow: 0 2px 15px #000;
+  text-shadow: 0 2px 15px #000000;
 }
 #speaker {
   font-size: 9px;
-  color: #d2ad75;
+  color: #b1b1b1;
   letter-spacing: 4px;
 }
 #line {
@@ -464,7 +464,7 @@ kbd {
   pointer-events: auto;
   font-size: 8px;
   letter-spacing: 2px;
-  color: #a6ad9c;
+  color: #aaaaaa;
 }
 #skip kbd {
   margin-left: 12px;
@@ -478,7 +478,7 @@ kbd {
 #reveal small {
   font-size: 9px;
   letter-spacing: 4px;
-  color: #d9bb89;
+  color: #bebebe;
 }
 #reveal h2 {
   font:
@@ -486,16 +486,16 @@ kbd {
     serif;
   letter-spacing: 1px;
   margin: 22px 0;
-  color: #efe4c8;
+  color: #e4e4e4;
 }
 #reveal h2 em {
-  color: #c46347;
+  color: #767676;
   font-weight: 400;
 }
 #reveal > span {
   font-size: 9px;
   letter-spacing: 7px;
-  border-top: 1px solid #c19f7166;
+  border-top: 1px solid #a3a3a366;
   padding-top: 16px;
 }
 #outcome {
@@ -507,7 +507,7 @@ kbd {
   align-items: center;
   justify-content: center;
   text-align: center;
-  background: #101916d9;
+  background: #171717d9;
   backdrop-filter: blur(5px);
 }
 #outcome h2 {
@@ -515,7 +515,7 @@ kbd {
     70px/1.1 Georgia,
     serif;
   margin: 24px 0;
-  color: #e9d5ad;
+  color: #d6d6d6;
   font-weight: 400;
 }
 #outcome p {
@@ -523,7 +523,7 @@ kbd {
   font:
     16px/1.8 Georgia,
     serif;
-  color: #b6c0ac;
+  color: #bcbcbc;
   margin: 0 24px 30px;
 }
 .outcome-actions {
@@ -535,20 +535,20 @@ kbd {
 .text-button {
   font-size: 8px;
   letter-spacing: 2px;
-  color: #b8bda9;
+  color: #bababa;
 }
 dialog {
-  background: #1c2722;
-  color: #e8dfc8;
-  border: 1px solid #b7a77c55;
+  background: #242424;
+  color: #dfdfdf;
+  border: 1px solid #a7a7a755;
   padding: 48px;
   max-width: 670px;
   width: calc(100% - 32px);
   max-height: 85svh;
-  box-shadow: 0 20px 100px #0009;
+  box-shadow: 0 20px 100px #00000099;
 }
 dialog::backdrop {
-  background: #0a100ed9;
+  background: #0f0f0fd9;
   backdrop-filter: blur(8px);
 }
 #close-modal {
@@ -556,26 +556,26 @@ dialog::backdrop {
   right: 16px;
   top: 12px;
   font-size: 28px;
-  color: #a5b49e;
+  color: #afafaf;
 }
 dialog h2 {
   font:
     38px Georgia,
     serif;
-  color: #ead1a3;
+  color: #d3d3d3;
   margin: 12px 0 25px;
 }
 dialog h3 {
   font:
     20px Georgia,
     serif;
-  color: #d8be90;
+  color: #c0c0c0;
   margin: 25px 0 8px;
 }
 dialog p {
   font-size: 13px;
   line-height: 1.85;
-  color: #bbc4b3;
+  color: #c1c1c1;
 }
 dialog .eyebrow {
   font-size: 8px;
@@ -588,15 +588,15 @@ dialog dl {
   line-height: 1.5;
 }
 dialog dt {
-  color: #e4c995;
+  color: #cbcbcb;
 }
 dialog dd {
   margin: 0;
-  color: #bcc5b2;
+  color: #c2c2c2;
 }
 .modal-tip {
   padding: 15px 0;
-  border-top: 1px solid #a6b08c33;
+  border-top: 1px solid #ababab33;
 }
 #touch-controls {
   position: absolute;
@@ -611,8 +611,8 @@ dialog dd {
 #touch-controls button {
   pointer-events: auto;
   touch-action: none;
-  background: #19241ec9;
-  border: 1px solid #ccc3a155;
+  background: #212121c9;
+  border: 1px solid #c2c2c255;
   min-width: 46px;
   height: 46px;
   border-radius: 50%;
@@ -646,7 +646,7 @@ dialog dd {
   align-content: end;
 }
 .touch-actions button:last-child {
-  background: #9b422ec9;
+  background: #535353c9;
 }
 @keyframes reveal {
   from {
@@ -878,7 +878,7 @@ dialog dd {
   position: absolute;
   width: 2px;
   height: 12px;
-  background: #c4c9ad;
+  background: #c6c6c6;
   top: 10px;
 }
 #pause-button::before {
@@ -891,7 +891,7 @@ dialog dd {
   content: '';
   position: absolute;
   inset: -40px -60px -35px -150px;
-  background: linear-gradient(100deg, #101a15ed, #18231ad9 60%, transparent);
+  background: linear-gradient(100deg, #181818ed, #202020d9 60%, transparent);
   clip-path: polygon(0 0, 91% 3%, 86% 24%, 100% 26%, 87% 49%, 95% 55%, 84% 78%, 92% 100%, 0 95%);
   z-index: -1;
 }
@@ -902,9 +902,9 @@ dialog dd {
   left: -24px;
   height: 110%;
   width: 2px;
-  background: #be6143;
+  background: #737373;
   transform: rotate(8deg);
-  box-shadow: 7px 18px 0 #be614333;
+  box-shadow: 7px 18px 0 #73737333;
   z-index: -1;
 }
 @media (max-height: 550px) and (orientation: landscape) {
@@ -992,4 +992,36 @@ dialog dd {
   .outcome-actions {
     gap: 12px;
   }
+}
+/* Chapter I: ink, wet stone and silver. Keep vital information above the weather. */
+.primary {
+  background: #dedede;
+  color: #141414;
+}
+.primary:hover {
+  background: #ffffff;
+}
+#boss-health {
+  background: #dedede;
+}
+.boss-health-track {
+  background: #101010;
+  border-color: #999999;
+}
+#player-health {
+  background: #f0f0f0;
+}
+#player-stamina {
+  background: #9c9c9c;
+}
+.boss-meta {
+  color: #d2d2d2;
+  text-shadow: 0 1px 4px #000000;
+}
+#combat-message {
+  color: #eeeeee;
+  text-shadow: 0 2px 10px #000000;
+}
+h1 em {
+  color: #dedede;
 }

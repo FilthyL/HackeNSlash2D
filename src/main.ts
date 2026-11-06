@@ -61,7 +61,7 @@ function setMode(next: Mode) {
     $('outcome-title').textContent = win ? 'An oath, unbroken.' : 'Rise. Remember.';
     $('outcome-copy').textContent = win
       ? 'Inside the broken bell: hundreds of stolen names. Your sister’s is the last. The final stroke is missing.'
-      : 'He taught you how to hold a blade. Now learn when to let it pass. Watch the amber marks, parry the steel, and dodge through the bell’s wave.';
+      : 'He taught you how to hold a blade. Now learn when to let it pass. Watch the white marks, parry the steel, and dodge through the bell’s wave.';
     if (win) {
       try {
         localStorage.setItem('ashen-vow-chapter-1', 'complete');
@@ -193,7 +193,12 @@ function frame(now: number) {
         $('combat-message').style.opacity = String(Math.max(0, messageTime * 2));
     }
   }
+  sound.setPaused(paused);
   renderer.draw(battle, paused ? 0 : dt, mode, sceneTime);
+  if (renderer.thunderCue) {
+    sound.play('thunder');
+    renderer.thunderCue = false;
+  }
   requestAnimationFrame(frame);
 }
 $('begin').addEventListener('click', () => start());
@@ -250,7 +255,7 @@ $('sound-button').addEventListener('click', async () => {
   $('sound-button').setAttribute('aria-label', enabled ? 'Disable sound' : 'Enable sound');
   if (enabled) sound.play('bell');
 });
-const controls = `<span class="eyebrow">A MOMENT BEFORE THE BLADE</span><h2>Learn his rhythm.</h2><dl><dt>W A S D / arrows</dt><dd>Move around the courtyard.</dd><dt>J / left click</dt><dd>Cut. Chain three cuts for a stronger finisher. Face your foe automatically at close range.</dd><dt>K / right click</dt><dd>Parry just before steel connects. A perfect parry staggers Kuroda and restores stamina.</dd><dt>Space</dt><dd>Dodge in your movement direction. Dodge through the expanding bell wave.</dd><dt>E</dt><dd>Heavy cut. Costs stamina and leaves you briefly committed.</dd><dt>Escape</dt><dd>Pause and catch your breath.</dd></dl><p class="modal-tip">Amber marks show where the next attack will land. Strike during his recovery. The bell wave cannot be parried. Touch controls appear on touch devices.</p>`;
+const controls = `<span class="eyebrow">A MOMENT BEFORE THE BLADE</span><h2>Learn his rhythm.</h2><dl><dt>W A S D / arrows</dt><dd>Move around the courtyard.</dd><dt>J / left click</dt><dd>Cut. Chain three cuts for a stronger finisher. Face your foe automatically at close range.</dd><dt>K / right click</dt><dd>Parry just before steel connects. A perfect parry staggers Kuroda and restores stamina.</dd><dt>Space</dt><dd>Dodge in your movement direction. Dodge through the expanding bell wave.</dd><dt>E</dt><dd>Heavy cut. Costs stamina and leaves you briefly committed.</dd><dt>Escape</dt><dd>Pause and catch your breath.</dd></dl><p class="modal-tip">White marks show where the next attack will land. Strike during his recovery. The bell wave cannot be parried. Touch controls appear on touch devices.</p>`;
 const chronicle = `<span class="eyebrow">ASHEN VOW · THE CHRONICLE</span><h2>Some debts survive death.</h2><p>The Quiet Accord learned to preserve the names and last words of the dead inside bronze bells. Then its ministers learned to take those names without permission. Communities lost the memory of why they had resisted. Massacres became unfortunate weather. Grief remained, but nobody could say who was missing.</p><h3>Ren Takamori · The Uncounted</h3><p>A Japanese samurai taught by Lord Kuroda to count every soldier home, Ren held a mountain road while his commander promised refugees another way out. There was no safe route. Ren returned to a family that could no longer remember his sister Aki. Only her name, scratched into his sword guard, survived the bell. Seven years later, he returns to the shrine above that road to confront the man he obeyed—and the choice he made.</p><h3>Lord Kuroda · The Hollow Warden</h3><p>Kuroda sealed the road and helped fill the bell. Now he contains its stolen names inside his own armour. His vigil is a punishment he appointed for himself because it was easier than facing the survivors. The people holding him upright have not forgotten.</p><h3>Lady Eleanor Vale · The Knight Who Signed</h3><p>An English knight celebrated for ending a siege through negotiation, Eleanor signed a warrant sending villagers to an Accord relief house. It had no kitchen. Years later, a surviving child asked where her mother was buried. Eleanor now carries the original warrant sewn inside her surcoat, seeking evidence that will condemn herself alongside the officials who designed the system.</p><h3>Lin Yue · The Vermilion Exile</h3><p>A Chinese jian swordswoman raised in a family of printers, Lin corrected a provincial register that falsely described a village as abandoned. The Accord seized the printing house; her father surrendered his name to save her. She now distributes forbidden testimony inside ordinary broadsheets, learning that an accurate account cannot make its readers choose justice.</p><h3>Meera · The Keeper of the Last Crossing</h3><p>A warrior from a coastal community informed by Kerala’s martial traditions, Meera helped a stranded Accord vessel before discovering its cargo of stolen names. Her brother refused an order to burn them. The struggle sank their ferry. She follows the river upstream with one sealed vessel that speaks in his voice—and knows things he never knew.</p><p class="modal-tip">An original fantasy world informed by distinct cultural references. This prototype implements Ren’s first duel; the other protagonists are planned chapters. Full stories and encounter scripts are included in the project’s docs folder.</p>`;
 function openModal(kind: 'controls' | 'story' | 'pause') {
   paused = true;

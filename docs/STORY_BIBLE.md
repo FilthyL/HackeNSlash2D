@@ -28,7 +28,7 @@ For seven years he has followed missing names through burnt registers and abando
 
 His first lead is Kuroda, guarding the bell above the road he once sealed. Ren wants to hear that his commander lied. The harder truth is that Kuroda did lie, and Ren still made a choice.
 
-**Visual language:** soot-black lamellar plates, a rain-heavy indigo coat, a narrow vermilion waist cord, and a chipped ivory sword guard. His silhouette is compact and human; the loose coat reveals controlled footwork. No enormous ornament competes with the sword. His idle hand checks the scratched name when he thinks nobody is looking.
+**Visual language:** a broad woven kasa shading his face, a pale wind-torn kimono jacket over black layers, pleated hakama, and a long cloth waist tie. Chapter I renders him entirely in black, white, and silver-grey. The hat gives him a distinct ronin silhouette; his loose sleeves and coat hems follow the storm while the blade remains clearly visible. His idle hand checks the scratched name when he thinks nobody is looking.
 
 **Combat:** deliberate katana cuts, brief evasive steps, and a deflection that turns precise timing into a decisive opening. His future signature ability, Witness, preserves the trace of an enemy's last attack so he can cut across it. His mechanics reward attention rather than endless aggression.
 

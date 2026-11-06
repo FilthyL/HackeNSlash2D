@@ -2,7 +2,9 @@
 
 **Chapter I: The Bell That Would Not Mourn**
 
-A small, cinematic isometric boss-fight prototype. Play Ren Takamori, a Japanese samurai returning to confront his former commander, Lord Kuroda—the Hollow Warden—in a rain-soaked shrine courtyard.
+A small, cinematic isometric boss-fight prototype. Play Ren Takamori, a Japanese samurai returning to confront his former commander, Lord Kuroda—the Hollow Warden—in a storm-lashed shrine courtyard.
+
+Chapter I uses a black-and-white storm palette. Ren wears a woven kasa, a windblown kimono jacket, and black hakama. Layered rain, swaying trees, ground ripples, lightning, and synthesized wind and thunder establish the atmosphere. Sound remains opt-in, and reduced-motion mode removes lightning and tree sway.
 
 The encounter includes an opening cutscene, boss reveal, a second-phase transition, defeat and retry, and a story ending. Combat centres on reading attacks, chaining sword cuts, timed parries, dodging, and committed heavy strikes. Other protagonists have written story treatments; Ren is the only playable character.
 
