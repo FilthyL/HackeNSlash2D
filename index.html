@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#171c1b" />
+    <meta
+      name="description"
+      content="Ashen Vow — a cinematic isometric samurai duel. An original browser game prototype."
+    />
+    <title>ASHEN VOW — The Bell That Would Not Mourn</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' fill='%23a7442e'/%3E%3Cpath d='M10 30L27 8M15 28L30 10M9 22L20 30' stroke='%23eee0c4' stroke-width='2'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="world" aria-label="Isometric shrine courtyard and samurai boss battle"></canvas>
+      <div class="grain" aria-hidden="true"></div>
+      <div class="vignette" aria-hidden="true"></div>
+      <header>
+        <a class="brand" href="./" aria-label="Ashen Vow home"
+          ><span class="sigil">〆</span
+          ><span>ASHEN VOW<small>AN ANTHOLOGY OF BROKEN OATHS</small></span></a
+        >
+        <nav>
+          <button id="story-button">THE CHRONICLE</button
+          ><button id="controls-button">HOW TO PLAY</button
+          ><button id="sound-button" class="sound" aria-pressed="false" aria-label="Enable sound">
+            <span>♫</span> SOUND OFF
+          </button>
+        </nav>
+      </header>
+      <main id="title-screen">
+        <div class="eyebrow"><span></span> CHAPTER I <i> / </i> A DEBT TO THE DEAD</div>
+        <h1>The bell that<br />would not<br /><em>mourn.</em></h1>
+        <p>The dead have lost their names.<br />Your old master knows why.</p>
+        <button id="begin" class="primary"><span>DRAW YOUR BLADE</span><b>↗</b></button>
+        <div class="start-note">A PLAYABLE BOSS ENCOUNTER <span>•</span> 3–5 MINUTES</div>
+      </main>
+      <div id="scene-label">
+        <span>葬鐘</span>
+        <div>THE MOURNING COURTYARD<small>AFTER THE LAST RAIN</small></div>
+      </div>
+      <div id="boss-hud" class="hidden">
+        <div class="boss-meta">
+          <span id="boss-phase">I · THE OATHBOUND</span><span>LORD KURODA</span
+          ><span id="boss-percent">100%</span>
+        </div>
+        <div class="boss-health-track"><div id="boss-health"></div></div>
+        <div class="boss-subtitle">THE HOLLOW WARDEN</div>
+      </div>
+      <div id="player-hud" class="hidden">
+        <div class="player-seal">蓮</div>
+        <div class="player-status">
+          <div class="player-name">REN TAKAMORI <span id="player-health-text">100 / 100</span></div>
+          <div class="health-track"><div id="player-health"></div></div>
+          <div class="stamina-track"><div id="player-stamina"></div></div>
+        </div>
+        <button id="pause-button" aria-label="Pause encounter">Ⅱ</button>
+      </div>
+      <div id="combat-message" aria-live="polite"></div>
+      <div id="cinema" class="hidden">
+        <div class="letterbox top"></div>
+        <div class="letterbox bottom"></div>
+        <div id="dialogue">
+          <span id="speaker"></span>
+          <p id="line"></p>
+        </div>
+        <button id="skip">SKIP SCENE <kbd>ENTER</kbd></button>
+        <div id="reveal" class="hidden">
+          <small>AN OATH, LEFT TO ROT</small>
+          <h2>THE HOLLOW<br /><em>WARDEN</em></h2>
+          <span>LORD KURODA</span>
+        </div>
+      </div>
+      <div id="outcome" class="hidden">
+        <span class="eyebrow" id="outcome-label"></span>
+        <h2 id="outcome-title"></h2>
+        <p id="outcome-copy"></p>
+        <div class="outcome-actions">
+          <button id="retry" class="primary">FACE HIM AGAIN <b>↗</b></button
+          ><button id="return-title" class="text-button">RETURN TO THE COURTYARD</button>
+        </div>
+      </div>
+      <footer>
+        <div class="edition">
+          <span class="live-dot"></span> FIRST BLOOD <span class="muted">/</span> PROTOTYPE 001
+        </div>
+        <div id="footer-controls">
+          <span><kbd>W A S D</kbd> MOVE</span><span><kbd>J</kbd> CUT</span
+          ><span><kbd>K</kbd> PARRY</span><span><kbd>SPACE</kbd> DODGE</span
+          ><span><kbd>E</kbd> HEAVY</span>
+        </div>
+        <span class="footer-right">A VOW OUTLIVES THE BLADE.</span>
+      </footer>
+      <div id="touch-controls" class="hidden">
+        <div class="dpad">
+          <button data-dir="up" aria-label="Move up">↑</button
+          ><button data-dir="left" aria-label="Move left">←</button
+          ><button data-dir="down" aria-label="Move down">↓</button
+          ><button data-dir="right" aria-label="Move right">→</button>
+        </div>
+        <div class="touch-actions">
+          <button data-action="parry">PARRY</button><button data-action="heavy">HEAVY</button
+          ><button data-action="dodge">DODGE</button><button data-action="attack">CUT</button>
+        </div>
+      </div>
+      <dialog id="modal">
+        <button id="close-modal" aria-label="Close dialog">×</button>
+        <div id="modal-content"></div>
+      </dialog>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
